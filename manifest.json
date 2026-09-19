@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "Displays a fixed avatar overlay on ChatGPT.",
   "permissions": ["storage"],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*"],

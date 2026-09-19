@@ -9,6 +9,9 @@ manifest.json           Chrome extension manifest
 content.js              Creates the overlay
 styles.css              Fixed-position overlay styling
 assets/placeholder.svg  Default transparent placeholder image
+options.html            Extension settings page
+options.js              Avatar upload and storage logic
+options.css             Settings page styling
 ```
 
 ## Load locally
@@ -21,25 +24,17 @@ assets/placeholder.svg  Default transparent placeholder image
 
 ## Use your avatar
 
-The extension currently uses `assets/placeholder.svg`, a simple transparent SVG. Put your transparent PNG at `assets/avatar.png`, then change this line in `content.js`:
+Open `chrome://extensions`, select this extension's **Details**, then choose **Extension options**. Select a PNG, JPEG, or WebP image (up to 5 MB), preview it, and click **Save avatar**.
 
-```js
-const AVATAR_ASSET = 'assets/placeholder.svg';
-```
+The avatar is stored locally in your Chrome profile as image data, not as a filesystem path. It is not synced across computers, so upload it again on each computer where you use the extension. Use **Use default** to remove the custom image without changing the saved overlay position.
 
-to:
-
-```js
-const AVATAR_ASSET = 'assets/avatar.png';
-```
-
-The image is displayed in a 220px by 220px frame by default and fills it with `object-fit: cover`. The overlay starts at a default position of 130px from the viewport's left edge and may overlap the ChatGPT sidebar. Use the small top-left dot to drag it; the dragged position is saved as relative horizontal and vertical ratios, so it restores approximately in the same place when monitor or window size changes. Use the top-right × to close it for the current page session only. If the selected image fails to load, the extension falls back to `assets/placeholder.svg`; if that also cannot load, it removes the overlay without affecting the page.
+The image is displayed in a 220px by 220px frame and fills it with `object-fit: cover`. The overlay starts at a default position of 130px from the viewport's left edge and may overlap the ChatGPT sidebar. Use the small top-left dot to drag it; the dragged position is saved as relative horizontal and vertical ratios, so it restores approximately in the same place when monitor or window size changes. Use the top-right × to close it for the current page session only. If a custom image cannot load, the extension falls back to `assets/placeholder.svg`.
 
 After changing any extension file, return to `chrome://extensions`, click the extension's reload icon, then refresh the ChatGPT tab.
 
 ## Current limitations
 
 - Drag position persists across reloads and is recalculated for the current viewport; closing remains session-only and reload restores the overlay.
+- Custom avatar images are local to the current Chrome profile and are not synced across computers.
 - There is no animation, state detection, or ChatGPT integration.
 - Position and size are fixed in `styles.css` (`left: 130px`, `bottom: 32px`, and a 220px square frame).
-- There is no settings page or saved configuration.

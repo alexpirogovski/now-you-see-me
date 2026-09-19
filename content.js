@@ -5,6 +5,7 @@
   const CLOSED_ATTRIBUTE = 'data-nyfm-avatar-closed';
   const AVATAR_ASSET = 'assets/placeholder.svg';
   const FALLBACK_ASSET = 'assets/placeholder.svg';
+  const AVATAR_IMAGE_KEY = 'avatarImageDataUrl';
   const POSITION_X_KEY = 'avatarPositionXRatio';
   const POSITION_Y_KEY = 'avatarPositionYRatio';
   const POSITION_KEYS = [POSITION_X_KEY, POSITION_Y_KEY];
@@ -25,6 +26,42 @@
 
   function getValidRatio(value) {
     return typeof value === 'number' && Number.isFinite(value) ? clamp(value, 0, 1) : null;
+  }
+
+  function isValidAvatarDataUrl(value) {
+    return typeof value === 'string' && /^data:image\/(png|jpeg|webp);base64,/i.test(value);
+  }
+
+  function setAvatarSource(avatar, source) {
+    avatar.src = source || chrome.runtime.getURL(AVATAR_ASSET);
+  }
+
+  function addAvatarImageStorage(overlay, avatar) {
+    function updateAvatar(value) {
+      if (overlay.isConnected) {
+        setAvatarSource(avatar, isValidAvatarDataUrl(value) ? value : '');
+      }
+    }
+
+    chrome.storage.local.get(AVATAR_IMAGE_KEY, (stored) => {
+      if (!chrome.runtime.lastError) {
+        updateAvatar(stored[AVATAR_IMAGE_KEY]);
+      }
+    });
+
+    function handleStorageChange(changes, areaName) {
+      if (areaName === 'local' && AVATAR_IMAGE_KEY in changes) {
+        updateAvatar(changes[AVATAR_IMAGE_KEY].newValue);
+      }
+    }
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return {
+      remove() {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      },
+    };
   }
 
   function addPositionPersistence(overlay) {
@@ -180,7 +217,7 @@
       }
     });
 
-    avatar.src = chrome.runtime.getURL(AVATAR_ASSET);
+    setAvatarSource(avatar);
 
     const dragHandle = document.createElement('button');
     dragHandle.className = 'nyfm-avatar-overlay__control nyfm-avatar-overlay__drag-handle';
@@ -199,10 +236,12 @@
     document.body.appendChild(overlay);
 
     const positionPersistence = addPositionPersistence(overlay);
+    const avatarImageStorage = addAvatarImageStorage(overlay, avatar);
 
     closeButton.addEventListener('click', () => {
       document.documentElement.setAttribute(CLOSED_ATTRIBUTE, '');
       positionPersistence.remove();
+      avatarImageStorage.remove();
       overlay.remove();
     });
 
