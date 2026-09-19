@@ -23,3 +23,37 @@
   height: 100%;
   object-fit: cover;
 }
+
+#nyfm-avatar-overlay .nyfm-avatar-overlay__control {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: #fff;
+  font: 600 16px/1 sans-serif;
+  line-height: 1;
+  pointer-events: auto;
+  user-select: none;
+  background: rgb(0 0 0 / 52%);
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+}
+
+#nyfm-avatar-overlay .nyfm-avatar-overlay__drag-handle {
+  top: 7px;
+  left: 7px;
+  width: 12px;
+  height: 12px;
+  cursor: move;
+  touch-action: none;
+}
+
+#nyfm-avatar-overlay .nyfm-avatar-overlay__close-button {
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+}

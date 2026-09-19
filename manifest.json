@@ -3,6 +3,7 @@
   "name": "ChatGPT Avatar Overlay",
   "version": "0.1.0",
   "description": "Displays a fixed avatar overlay on ChatGPT.",
+  "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*"],
