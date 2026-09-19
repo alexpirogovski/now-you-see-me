@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="350" viewBox="0 0 300 350" role="img" aria-labelledby="title desc">
+  <title id="title">Avatar placeholder</title>
+  <desc id="desc">A simple neutral avatar silhouette on a transparent background.</desc>
+  <circle cx="150" cy="105" r="70" fill="#7c3aed" opacity=".9"/>
+  <path d="M30 350c10-100 64-150 120-150s110 50 120 150" fill="#7c3aed" opacity=".9"/>
+</svg>

@@ -1,0 +1,25 @@
+#nyfm-avatar-overlay {
+  position: fixed;
+  left: 130px;
+  bottom: 32px;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: 220px;
+  height: 220px;
+  pointer-events: none;
+  background: transparent;
+  display: block;
+  visibility: visible;
+  opacity: 0.88;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
+  overflow: hidden;
+}
+
+#nyfm-avatar-overlay .nyfm-avatar-overlay__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
