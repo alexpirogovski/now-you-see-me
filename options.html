@@ -9,22 +9,52 @@
   <body>
     <main class="settings">
       <h1>Avatar settings</h1>
-      <p class="intro">Choose an avatar for the ChatGPT overlay. Images are stored locally in this Chrome profile.</p>
+      <p class="intro">Choose images for the ChatGPT overlay. Images are stored locally in this Chrome profile.</p>
 
-      <div class="preview-frame">
-        <img id="avatar-preview" alt="Avatar preview">
-      </div>
+      <section class="avatar-setting" aria-labelledby="idle-avatar-heading">
+        <h2 id="idle-avatar-heading">Idle avatar</h2>
+        <div class="preview-frame">
+          <img id="idle-avatar-preview" alt="Idle avatar preview">
+        </div>
+        <label class="file-label" for="idle-avatar-file">Choose image</label>
+        <input id="idle-avatar-file" type="file" accept="image/png,image/jpeg,image/webp">
+        <p class="hint">PNG, JPEG, or WebP. Maximum file size: 5 MB.</p>
+        <div class="actions">
+          <button id="save-idle-avatar" type="button">Save idle avatar</button>
+          <button id="reset-idle-avatar" type="button" class="secondary">Use default</button>
+        </div>
+        <p id="idle-avatar-status" class="status" role="status" aria-live="polite"></p>
+      </section>
 
-      <label class="file-label" for="avatar-file">Choose image</label>
-      <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp">
-      <p class="hint">PNG, JPEG, or WebP. Maximum file size: 5 MB.</p>
+      <section class="avatar-setting" aria-labelledby="thinking-avatar-heading">
+        <h2 id="thinking-avatar-heading">Thinking avatar</h2>
+        <div class="preview-frame">
+          <img id="thinking-avatar-preview" alt="Thinking avatar preview">
+        </div>
+        <label class="file-label" for="thinking-avatar-file">Choose image</label>
+        <input id="thinking-avatar-file" type="file" accept="image/png,image/jpeg,image/webp">
+        <p class="hint">Shown while ChatGPT displays its Thinking activity state. PNG, JPEG, or WebP; maximum file size: 5 MB. Falls back to the Answering avatar if unset.</p>
+        <div class="actions">
+          <button id="save-thinking-avatar" type="button">Save thinking avatar</button>
+          <button id="reset-thinking-avatar" type="button" class="secondary">Use default</button>
+        </div>
+        <p id="thinking-avatar-status" class="status" role="status" aria-live="polite"></p>
+      </section>
 
-      <div class="actions">
-        <button id="save-avatar" type="button">Save avatar</button>
-        <button id="reset-avatar" type="button" class="secondary">Use default</button>
-      </div>
-
-      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <section class="avatar-setting" aria-labelledby="answering-avatar-heading">
+        <h2 id="answering-avatar-heading">Answering avatar</h2>
+        <div class="preview-frame">
+          <img id="answering-avatar-preview" alt="Answering avatar preview">
+        </div>
+        <label class="file-label" for="answering-avatar-file">Choose image</label>
+        <input id="answering-avatar-file" type="file" accept="image/png,image/jpeg,image/webp">
+        <p class="hint">Shown while ChatGPT is generating a response. PNG, JPEG, or WebP; maximum file size: 5 MB. Falls back to the idle avatar if unset.</p>
+        <div class="actions">
+          <button id="save-answering-avatar" type="button">Save answering avatar</button>
+          <button id="reset-answering-avatar" type="button" class="secondary">Use default</button>
+        </div>
+        <p id="answering-avatar-status" class="status" role="status" aria-live="polite"></p>
+      </section>
     </main>
     <script src="options.js"></script>
   </body>

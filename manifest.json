@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Avatar Overlay",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Displays a fixed avatar overlay on ChatGPT.",
   "permissions": ["storage"],
   "options_ui": {

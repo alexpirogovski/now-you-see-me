@@ -6,9 +6,28 @@
   const AVATAR_ASSET = 'assets/placeholder.svg';
   const FALLBACK_ASSET = 'assets/placeholder.svg';
   const AVATAR_IMAGE_KEY = 'avatarImageDataUrl';
+  const ANSWERING_AVATAR_IMAGE_KEY = 'answeringAvatarImageDataUrl';
+  const THINKING_AVATAR_IMAGE_KEY = 'thinkingAvatarImageDataUrl';
+  const ANSWERING_MIGRATION_KEY = 'answeringAvatarMigrationComplete';
   const POSITION_X_KEY = 'avatarPositionXRatio';
   const POSITION_Y_KEY = 'avatarPositionYRatio';
   const POSITION_KEYS = [POSITION_X_KEY, POSITION_Y_KEY];
+  const AvatarState = Object.freeze({
+    IDLE: 'idle',
+    THINKING: 'thinking',
+    ANSWERING: 'answering',
+  });
+  const DEBUG = false;
+  const STATE_EVALUATION_DELAY_MS = 100;
+  const STOP_BUTTON_SELECTOR = 'button[aria-label="Stop"]';
+  const THINKING_BUTTON_SELECTOR = 'button[aria-expanded]';
+  const STATE_CONTROL_SELECTOR = `${THINKING_BUTTON_SELECTOR}, ${STOP_BUTTON_SELECTOR}`;
+
+  function debugLog(...argumentsList) {
+    if (DEBUG) {
+      console.debug('[Avatar Overlay]', ...argumentsList);
+    }
+  }
 
   function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
@@ -36,30 +55,241 @@
     avatar.src = source || chrome.runtime.getURL(AVATAR_ASSET);
   }
 
-  function addAvatarImageStorage(overlay, avatar) {
-    function updateAvatar(value) {
-      if (overlay.isConnected) {
-        setAvatarSource(avatar, isValidAvatarDataUrl(value) ? value : '');
+  function addAvatarStateMachine(overlay, avatar) {
+    let activeState = null;
+    let idleAvatarDataUrl = '';
+    let thinkingAvatarDataUrl = '';
+    let answeringAvatarDataUrl = '';
+
+    function migrateLegacyAnsweringAvatar(migrationComplete) {
+      if (migrationComplete) {
+        return;
+      }
+
+      if (
+        isValidAvatarDataUrl(answeringAvatarDataUrl) ||
+        !isValidAvatarDataUrl(thinkingAvatarDataUrl)
+      ) {
+        chrome.storage.local.set({ [ANSWERING_MIGRATION_KEY]: true });
+        return;
+      }
+
+      answeringAvatarDataUrl = thinkingAvatarDataUrl;
+      thinkingAvatarDataUrl = '';
+      chrome.storage.local.set(
+        {
+          [ANSWERING_AVATAR_IMAGE_KEY]: answeringAvatarDataUrl,
+          [ANSWERING_MIGRATION_KEY]: true,
+        },
+        () => {
+          if (!chrome.runtime.lastError) {
+            chrome.storage.local.remove(THINKING_AVATAR_IMAGE_KEY);
+          }
+        }
+      );
+    }
+
+    function getSourceForState(state) {
+      if (state === AvatarState.THINKING) {
+        if (isValidAvatarDataUrl(thinkingAvatarDataUrl)) {
+          return thinkingAvatarDataUrl;
+        }
+
+        if (isValidAvatarDataUrl(answeringAvatarDataUrl)) {
+          return answeringAvatarDataUrl;
+        }
+      }
+
+      if (state === AvatarState.ANSWERING && isValidAvatarDataUrl(answeringAvatarDataUrl)) {
+        return answeringAvatarDataUrl;
+      }
+
+      if (isValidAvatarDataUrl(idleAvatarDataUrl)) {
+        return idleAvatarDataUrl;
+      }
+
+      return '';
+    }
+
+    function setAvatarState(state, force = false) {
+      if (!overlay.isConnected || (!force && state === activeState)) {
+        return;
+      }
+
+      const stateChanged = state !== activeState;
+      activeState = state;
+      const source = getSourceForState(state);
+      const resolvedSource = source || chrome.runtime.getURL(AVATAR_ASSET);
+
+      if (avatar.src !== resolvedSource) {
+        setAvatarSource(avatar, source);
+      }
+
+      if (stateChanged) {
+        debugLog(
+          state === AvatarState.THINKING
+            ? 'Avatar state -> THINKING (reason: thinking-control)'
+            : state === AvatarState.ANSWERING
+              ? 'Avatar state -> ANSWERING (reason: stop-button)'
+              : 'Avatar state -> IDLE'
+        );
       }
     }
 
-    chrome.storage.local.get(AVATAR_IMAGE_KEY, (stored) => {
-      if (!chrome.runtime.lastError) {
-        updateAvatar(stored[AVATAR_IMAGE_KEY]);
+    chrome.storage.local.get(
+      [
+        AVATAR_IMAGE_KEY,
+        THINKING_AVATAR_IMAGE_KEY,
+        ANSWERING_AVATAR_IMAGE_KEY,
+        ANSWERING_MIGRATION_KEY,
+      ],
+      (stored) => {
+        if (chrome.runtime.lastError || !overlay.isConnected) {
+          return;
+        }
+
+        idleAvatarDataUrl = stored[AVATAR_IMAGE_KEY];
+        answeringAvatarDataUrl = stored[ANSWERING_AVATAR_IMAGE_KEY];
+        thinkingAvatarDataUrl = stored[THINKING_AVATAR_IMAGE_KEY];
+        migrateLegacyAnsweringAvatar(stored[ANSWERING_MIGRATION_KEY] === true);
+        setAvatarState(activeState || AvatarState.IDLE, true);
       }
-    });
+    );
 
     function handleStorageChange(changes, areaName) {
-      if (areaName === 'local' && AVATAR_IMAGE_KEY in changes) {
-        updateAvatar(changes[AVATAR_IMAGE_KEY].newValue);
+      if (areaName !== 'local') {
+        return;
+      }
+
+      if (AVATAR_IMAGE_KEY in changes) {
+        idleAvatarDataUrl = changes[AVATAR_IMAGE_KEY].newValue;
+      }
+
+      if (THINKING_AVATAR_IMAGE_KEY in changes) {
+        thinkingAvatarDataUrl = changes[THINKING_AVATAR_IMAGE_KEY].newValue;
+      }
+
+      if (ANSWERING_AVATAR_IMAGE_KEY in changes) {
+        answeringAvatarDataUrl = changes[ANSWERING_AVATAR_IMAGE_KEY].newValue;
+      }
+
+      if (ANSWERING_MIGRATION_KEY in changes) {
+        migrateLegacyAnsweringAvatar(changes[ANSWERING_MIGRATION_KEY].newValue === true);
+      }
+
+      if (
+        AVATAR_IMAGE_KEY in changes ||
+        THINKING_AVATAR_IMAGE_KEY in changes ||
+        ANSWERING_AVATAR_IMAGE_KEY in changes ||
+        ANSWERING_MIGRATION_KEY in changes
+      ) {
+        setAvatarState(activeState || AvatarState.IDLE, true);
       }
     }
 
     chrome.storage.onChanged.addListener(handleStorageChange);
+    setAvatarState(AvatarState.IDLE);
+
+    return {
+      setAvatarState,
+      remove() {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      },
+    };
+  }
+
+  function addAvatarStateDetection(overlay, setAvatarState) {
+    let evaluationTimer = null;
+
+    function scheduleStateEvaluation(delay = STATE_EVALUATION_DELAY_MS) {
+      if (evaluationTimer !== null) {
+        return;
+      }
+
+      evaluationTimer = window.setTimeout(() => {
+        evaluationTimer = null;
+        evaluateState();
+      }, delay);
+    }
+
+    function evaluateState() {
+      if (!overlay.isConnected) {
+        return;
+      }
+
+      const thinkingControl = hasThinkingControl();
+      const hasStopButton = Boolean(document.querySelector(STOP_BUTTON_SELECTOR));
+
+      if (thinkingControl) {
+        setAvatarState(AvatarState.THINKING);
+        return;
+      }
+
+      if (DEBUG && hasStopButton) {
+        const candidates = Array.from(document.querySelectorAll(THINKING_BUTTON_SELECTOR))
+          .filter((button) => button.innerText.includes('Thinking'))
+          .map((button) => ({
+            tag: button.tagName,
+            text: button.innerText,
+            ariaExpanded: button.getAttribute('aria-expanded'),
+          }));
+
+        if (candidates.length > 0) {
+          debugLog('Thinking control candidates did not match:', candidates);
+        }
+      }
+
+      setAvatarState(hasStopButton ? AvatarState.ANSWERING : AvatarState.IDLE);
+    }
+
+    function hasThinkingControl() {
+      return Array.from(document.querySelectorAll(THINKING_BUTTON_SELECTOR)).some((button) => {
+        const words = button.innerText.trim().split(/\s+/).filter(Boolean);
+        return words.length > 0 && words.every((word) => word === 'Thinking');
+      });
+    }
+
+    function mutationMayAffectStateControls(mutations) {
+      return mutations.some((mutation) => {
+        if (mutation.type === 'attributes') {
+          return true;
+        }
+
+        const target =
+          mutation.target.nodeType === Node.ELEMENT_NODE
+            ? mutation.target
+            : mutation.target.parentElement;
+        if (target && target.closest(THINKING_BUTTON_SELECTOR)) {
+          return true;
+        }
+
+        return Array.from(mutation.addedNodes).concat(Array.from(mutation.removedNodes)).some(
+          (node) =>
+            node.nodeType === Node.ELEMENT_NODE &&
+            (node.matches(STATE_CONTROL_SELECTOR) || node.querySelector(STATE_CONTROL_SELECTOR))
+        );
+      });
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      if (mutationMayAffectStateControls(mutations)) {
+        scheduleStateEvaluation();
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-label', 'aria-expanded'],
+    });
+    scheduleStateEvaluation(0);
 
     return {
       remove() {
-        chrome.storage.onChanged.removeListener(handleStorageChange);
+        observer.disconnect();
+        if (evaluationTimer !== null) {
+          window.clearTimeout(evaluationTimer);
+        }
       },
     };
   }
@@ -236,12 +466,17 @@
     document.body.appendChild(overlay);
 
     const positionPersistence = addPositionPersistence(overlay);
-    const avatarImageStorage = addAvatarImageStorage(overlay, avatar);
+    const avatarStateMachine = addAvatarStateMachine(overlay, avatar);
+    const avatarStateDetection = addAvatarStateDetection(
+      overlay,
+      avatarStateMachine.setAvatarState
+    );
 
     closeButton.addEventListener('click', () => {
       document.documentElement.setAttribute(CLOSED_ATTRIBUTE, '');
       positionPersistence.remove();
-      avatarImageStorage.remove();
+      avatarStateMachine.remove();
+      avatarStateDetection.remove();
       overlay.remove();
     });
 
