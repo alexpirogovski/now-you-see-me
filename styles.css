@@ -29,31 +29,38 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 26px;
   padding: 0;
-  color: #fff;
+  color: #25252b;
   font: 600 16px/1 sans-serif;
   line-height: 1;
   pointer-events: auto;
   user-select: none;
-  background: rgb(0 0 0 / 52%);
-  border: 1px solid rgb(255 255 255 / 55%);
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  background: #fff;
+  border: 0;
+  box-shadow: none;
 }
 
 #nyfm-avatar-overlay .nyfm-avatar-overlay__drag-handle {
-  top: 7px;
-  left: 7px;
-  width: 12px;
-  height: 12px;
+  top: 0;
+  left: 0;
+  border-radius: 0 0 14px;
   cursor: move;
   touch-action: none;
 }
 
+#nyfm-avatar-overlay .nyfm-avatar-overlay__drag-handle::after {
+  width: 7px;
+  height: 7px;
+  content: '';
+  background: #4b4b55;
+  border-radius: 50%;
+}
+
 #nyfm-avatar-overlay .nyfm-avatar-overlay__close-button {
-  top: 5px;
-  right: 5px;
+  top: 0;
+  right: 0;
+  border-radius: 0 0 0 14px;
   cursor: pointer;
 }

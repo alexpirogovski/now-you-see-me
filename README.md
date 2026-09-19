@@ -12,15 +12,33 @@ assets/placeholder.svg  Default transparent placeholder image
 options.html            Extension settings page
 options.js              Avatar upload and storage logic
 options.css             Settings page styling
+scripts/package.sh      Local release ZIP packager
 ```
 
-## Load locally
+## Installation
 
-1. Open `chrome://extensions` in Chrome.
-2. Turn on **Developer mode**.
-3. Select **Load unpacked**.
-4. Choose this repository folder (`now-you-see-me`).
-5. Open or refresh a page at `https://chatgpt.com/`.
+### Development
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/alexpirogovski/now-you-see-me.git
+   ```
+
+2. Open `chrome://extensions` in Chrome.
+3. Turn on **Developer mode**.
+4. Select **Load unpacked**.
+5. Choose the cloned `now-you-see-me` directory.
+6. Open or refresh a page at `https://chatgpt.com/`.
+
+### GitHub Release
+
+1. Download the release ZIP from the repository's GitHub Releases page.
+2. Extract the ZIP to a permanent directory. Chrome cannot load an unpacked extension directly from a ZIP file.
+3. Open `chrome://extensions` in Chrome and turn on **Developer mode**.
+4. Select **Load unpacked** and choose the extracted directory.
+
+Do not move or delete the selected cloned/extracted directory after loading it: Chrome uses that directory for the installed unpacked extension.
 
 ## Use your avatar
 
