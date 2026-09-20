@@ -7,6 +7,7 @@ A minimal Chrome Manifest V3 extension that adds a fixed, non-interactive framed
 ```
 manifest.json           Chrome extension manifest
 content.js              Creates the overlay
+enter-to-send.js        ChatGPT composer Enter-to-Send shortcut
 styles.css              Fixed-position overlay styling
 assets/placeholder.svg  Default transparent placeholder image
 options.html            Extension settings page
@@ -54,10 +55,14 @@ The pulsing activity indicator must be visible. The Thinking-control fallback in
 
 After changing any extension file, return to `chrome://extensions`, click the extension's reload icon, then refresh the ChatGPT tab.
 
+## Experimental Enter-to-Send
+
+Enter sends a message in the ChatGPT message composer, while Shift+Enter inserts a newline. When the normal enabled Send button is available, the extension clicks it. While ChatGPT is answering and exposes its Stop button instead, a bare Enter is forwarded to the composer as Ctrl+Enter, matching ChatGPT's native queued-send shortcut. Real Ctrl+Enter, Cmd+Enter, Alt+Enter, IME composition, and repeated key events are left unchanged. The feature is enabled by default, applies only to a confirmed ChatGPT composer, and has no settings toggle yet.
+
 ## Current limitations
 
 - Drag position persists across reloads and is recalculated for the current viewport; closing remains session-only and reload restores the overlay.
 - Custom avatar images are local to the current Chrome profile and are not synced across computers.
 - Only Idle, Thinking, and Answering states are currently supported.
-- There is no animation, state detection, or ChatGPT integration.
+- There is no animation or deeper ChatGPT integration beyond observable UI controls.
 - Position and size are fixed in `styles.css` (`left: 130px`, `bottom: 32px`, and a 220px square frame).

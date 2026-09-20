@@ -14,6 +14,7 @@ python3 -m json.tool manifest.json >/dev/null
 
 if command -v node >/dev/null 2>&1; then
   node --check content.js
+  node --check enter-to-send.js
   node --check options.js
 else
   echo "Node is unavailable; skipping JavaScript syntax checks." >&2
@@ -23,7 +24,7 @@ rm -rf "$STAGING_DIR"
 rm -f "$ARCHIVE_PATH"
 mkdir -p "$STAGING_DIR/assets"
 
-cp manifest.json content.js styles.css options.html options.js options.css "$STAGING_DIR/"
+cp manifest.json content.js enter-to-send.js styles.css options.html options.js options.css "$STAGING_DIR/"
 cp -R assets/. "$STAGING_DIR/assets/"
 
 (cd "$STAGING_DIR" && zip -qr "$ARCHIVE_PATH" .)
