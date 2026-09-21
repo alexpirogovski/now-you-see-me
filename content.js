@@ -21,7 +21,12 @@
   const STATE_EVALUATION_DELAY_MS = 100;
   const STOP_BUTTON_SELECTOR = 'button[aria-label="Stop"]';
   const THINKING_BUTTON_SELECTOR = 'button[aria-expanded]';
-  const STATE_CONTROL_SELECTOR = `${THINKING_BUTTON_SELECTOR}, ${STOP_BUTTON_SELECTOR}`;
+  const PULSING_THINKING_INDICATOR_SELECTOR = '.pulsing-dot';
+  const STATE_CONTROL_SELECTOR = [
+    THINKING_BUTTON_SELECTOR,
+    STOP_BUTTON_SELECTOR,
+    PULSING_THINKING_INDICATOR_SELECTOR,
+  ].join(', ');
 
   function debugLog(...argumentsList) {
     if (DEBUG) {
@@ -111,7 +116,7 @@
       return '';
     }
 
-    function setAvatarState(state, force = false) {
+    function setAvatarState(state, force = false, reason = '') {
       if (!overlay.isConnected || (!force && state === activeState)) {
         return;
       }
@@ -128,7 +133,7 @@
       if (stateChanged) {
         debugLog(
           state === AvatarState.THINKING
-            ? 'Avatar state -> THINKING (reason: thinking-control)'
+            ? `Avatar state -> THINKING (reason: ${reason || 'thinking-control'})`
             : state === AvatarState.ANSWERING
               ? 'Avatar state -> ANSWERING (reason: stop-button)'
               : 'Avatar state -> IDLE'
@@ -217,11 +222,16 @@
         return;
       }
 
+      if (hasPulsingThinkingIndicator()) {
+        setAvatarState(AvatarState.THINKING, false, 'pulsing-dot');
+        return;
+      }
+
       const thinkingControl = hasThinkingControl();
       const hasStopButton = Boolean(document.querySelector(STOP_BUTTON_SELECTOR));
 
       if (thinkingControl) {
-        setAvatarState(AvatarState.THINKING);
+        setAvatarState(AvatarState.THINKING, false, 'thinking-control');
         return;
       }
 
@@ -239,7 +249,41 @@
         }
       }
 
-      setAvatarState(hasStopButton ? AvatarState.ANSWERING : AvatarState.IDLE);
+      setAvatarState(
+        hasStopButton ? AvatarState.ANSWERING : AvatarState.IDLE,
+        false,
+        hasStopButton ? 'stop-button' : ''
+      );
+    }
+
+    function hasPulsingThinkingIndicator() {
+      const candidates = Array.from(
+        document.querySelectorAll(PULSING_THINKING_INDICATOR_SELECTOR)
+      );
+      const visibleCandidates = candidates.map((candidate) => {
+        const computedStyle = window.getComputedStyle(candidate);
+        const visible =
+          !candidate.hidden &&
+          candidate.getClientRects().length > 0 &&
+          computedStyle.display !== 'none' &&
+          computedStyle.visibility !== 'hidden';
+
+        return { candidate, visible };
+      });
+
+      if (DEBUG && candidates.length > 0) {
+        debugLog(
+          'Pulsing thinking indicator candidates:',
+          visibleCandidates.map(({ candidate, visible }) => ({
+            visible,
+            clientWidth: candidate.clientWidth,
+            clientHeight: candidate.clientHeight,
+            className: candidate.className,
+          }))
+        );
+      }
+
+      return visibleCandidates.some(({ visible }) => visible);
     }
 
     function hasThinkingControl() {
@@ -280,7 +324,7 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['aria-label', 'aria-expanded'],
+      attributeFilter: ['aria-label', 'aria-expanded', 'class', 'hidden', 'style'],
     });
     scheduleStateEvaluation(0);
 
